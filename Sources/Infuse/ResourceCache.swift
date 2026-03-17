@@ -28,15 +28,14 @@ import Mutex
 public final class ResourceCache: Sendable {
 
     public static let shared: ResourceCache = .init()
-    
+
     /// Resources maintained by the cache
     ///
     /// - note: `ObjectIdentifier` provides a hashable reference to a specific type being cached.
     private let resources: Mutex<[ObjectIdentifier: () -> Any]> = Mutex([:])
 
-    public init() {
-    }
-    
+    public init() {}
+
     /// Add a resource to the cache.
     public func cache<T>(resource: @escaping () -> T) {
         /*
@@ -49,7 +48,7 @@ public final class ResourceCache: Sendable {
             $0[ObjectIdentifier(T.self)] = nonAdvisableClosure()
         }
     }
-    
+
     /// Resolve a resource stored in the cache.
     ///
     /// - throws: `ResourceError`
@@ -62,14 +61,14 @@ public final class ResourceCache: Sendable {
         guard let source = source?() else {
             throw ResourceError.source(T.self)
         }
-        
+
         guard let resource = source as? T else {
             throw ResourceError.type(T.self)
         }
-        
+
         return resource
     }
-    
+
     /// Configures the cache with a `ResourceSupplier`.
     ///
     /// - parameters:
@@ -84,10 +83,10 @@ public extension ResourceCache {
     ///
     /// - parameters:
     ///   - resource: Function returning a resource type to be cached.
-    static func cache<T>(resource: @escaping () -> T) {
+    static func cache(resource: @escaping () -> some Any) {
         ResourceCache.shared.cache(resource: resource)
     }
-    
+
     /// Resolve a resource stored in the `.shared` cache.
     ///
     /// - throws: `ResourceError`
@@ -95,7 +94,7 @@ public extension ResourceCache {
     static func resolve<T>() throws -> T {
         try ResourceCache.shared.resolve()
     }
-    
+
     /// Configures the `.shared` cache with a `ResourceSupplier`.
     ///
     /// - parameters:

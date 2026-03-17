@@ -29,7 +29,7 @@ let package = Package(
             name: "Infuse",
             dependencies: [
                 .product(name: "Mutex", package: "swift-mutex"),
-            ],
+            ]
         ),
         .testTarget(
             name: "InfuseTests",
@@ -37,7 +37,7 @@ let package = Package(
     ],
     swiftLanguageModes: [
         .v6,
-    ],
+    ]
 )
 
 for target in package.targets {

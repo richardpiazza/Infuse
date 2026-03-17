@@ -1,7 +1,7 @@
 @testable import Infuse
 import Testing
 
-/// Verify the behaviors and expectations of the `ResourceCache`, 
+/// Verify the behaviors and expectations of the `ResourceCache`,
 /// `ResourceSupplier`, and `Resource` property wrapper.
 struct ResourceTests {
 
@@ -16,7 +16,9 @@ struct ResourceTests {
             data = defaultData
         }
 
-        func getData() -> String { data }
+        func getData() -> String {
+            data
+        }
     }
 
     private class Supplier: ResourceSupplier {
@@ -34,21 +36,21 @@ struct ResourceTests {
     }
 
     /// Verify that different types access the same underlying object.
-    @Test func typedResolver() {
+    @Test func `typed resolver`() {
         let cache = ResourceCache()
         cache.configure(with: Supplier())
 
         @Resource(cache: cache) var exampleService: any ExampleService
         @Resource(cache: cache) var concreteService: ConcreteService
-        
+
         #expect(exampleService.getData() == "Initial")
         concreteService.data = "Modified"
         #expect(concreteService.getData() == "Modified")
         #expect(exampleService.getData() == "Modified")
     }
-    
+
     /// Verify that a resource can be dissolved and resolved upon next access.
-    @Test func dependencyDissolve() {
+    @Test func `dependency dissolve`() {
         let cache = ResourceCache()
         cache.configure(with: Supplier())
 
@@ -59,7 +61,7 @@ struct ResourceTests {
 
         _example1.dissolve()
         cache.configure(with: Supplier(defaultData: "Re-supply"))
-        
+
         #expect(example1.getData() == "Re-supply")
         #expect(example2.getData() == "Initial")
     }
