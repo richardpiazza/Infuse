@@ -1,0 +1,15 @@
+{
+  "originHash" : "7240cc0c1076f9fa93e5414baf3b1d00d38add8a42ed0a21ea16b147b11e4a78",
+  "pins" : [
+    {
+      "identity" : "swift-mutex",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swhitty/swift-mutex.git",
+      "state" : {
+        "revision" : "1770152df756b54c28ef1787df1e957d93cc62d5",
+        "version" : "0.0.6"
+      }
+    }
+  ],
+  "version" : 3
+}

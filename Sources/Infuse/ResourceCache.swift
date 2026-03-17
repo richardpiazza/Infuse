@@ -1,3 +1,5 @@
+import Mutex
+
 /// Collection of service and configuration dependencies.
 ///
 /// On the initialization of an application, resources should be provided to the cache. Commonly,
@@ -23,44 +25,55 @@
 /// ```
 ///
 /// See `ResourceSupplier` for additional details.
-public class ResourceCache {
-    
+public final class ResourceCache: Sendable {
+
     public static let shared: ResourceCache = .init()
-    
+
     /// Resources maintained by the cache
     ///
     /// - note: `ObjectIdentifier` provides a hashable reference to a specific type being cached.
-    private var resources: [ObjectIdentifier: () -> Any] = [:]
-    
-    public init() {
-    }
-    
+    private let resources: Mutex<[ObjectIdentifier: () -> Any]> = Mutex([:])
+
+    public init() {}
+
     /// Add a resource to the cache.
     public func cache<T>(resource: @escaping () -> T) {
-        resources[ObjectIdentifier(T.self)] = resource
+        /*
+         https://forums.swift.org/t/mutex-error/76653
+         https://github.com/swiftlang/swift/issues/77199
+         https://github.com/swiftlang/swift/issues/87540
+         */
+        let nonAdvisableClosure = { resource }
+        resources.withLock {
+            $0[ObjectIdentifier(T.self)] = nonAdvisableClosure()
+        }
     }
-    
+
     /// Resolve a resource stored in the cache.
     ///
     /// - throws: `ResourceError`
     /// - returns: The resolved resource for the request type.
     public func resolve<T>() throws -> T {
-        guard let source = resources[ObjectIdentifier(T.self)] else {
+        let source = resources.withLock {
+            $0[ObjectIdentifier(T.self)]
+        }
+
+        guard let source = source?() else {
             throw ResourceError.source(T.self)
         }
-        
-        guard let resource = source() as? T else {
+
+        guard let resource = source as? T else {
             throw ResourceError.type(T.self)
         }
-        
+
         return resource
     }
-    
+
     /// Configures the cache with a `ResourceSupplier`.
     ///
     /// - parameters:
     ///   - supplier: The _supplier_ with _resources_ that should be added to _cache_.
-    public func configure(with supplier: ResourceSupplier) {
+    public func configure(with supplier: any ResourceSupplier) {
         supplier.supply(cache: self)
     }
 }
@@ -70,10 +83,10 @@ public extension ResourceCache {
     ///
     /// - parameters:
     ///   - resource: Function returning a resource type to be cached.
-    static func cache<T>(resource: @escaping () -> T) {
+    static func cache(resource: @escaping () -> some Any) {
         ResourceCache.shared.cache(resource: resource)
     }
-    
+
     /// Resolve a resource stored in the `.shared` cache.
     ///
     /// - throws: `ResourceError`
@@ -81,12 +94,12 @@ public extension ResourceCache {
     static func resolve<T>() throws -> T {
         try ResourceCache.shared.resolve()
     }
-    
+
     /// Configures the `.shared` cache with a `ResourceSupplier`.
     ///
     /// - parameters:
     ///   - supplier: The _supplier_ with _resources_ that should be added to _cache_.
-    static func configure(with supplier: ResourceSupplier) {
+    static func configure(with supplier: any ResourceSupplier) {
         ResourceCache.shared.configure(with: supplier)
     }
 }
